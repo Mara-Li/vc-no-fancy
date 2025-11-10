@@ -16,7 +16,7 @@ While visually appealing, these characters can cause issues with:
 **No Fancy** automatically converts these characters into standard ASCII equivalents, ensuring consistent behavior across all Discord search systems.
 
 Example:
-`𝐄𝐋𝐕𝐈𝐑𝐀` → `ELVIRA`
+`𝑳𝒊𝒌𝒆-𝑻𝒉𝒊𝒔` → `Like-this`
 
 ## Features
 
