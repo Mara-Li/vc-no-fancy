@@ -13,9 +13,9 @@ type AnyFn = (...a: any[]) => any;
 type AnyObj = Record<string, any>;
 
 export default definePlugin({
-    name: "No Fancy",
+    name: "No Fancy Channel",
     description: "Normalize channel name to remove fancy Unicode characters, allowing to search for them in autocomplete and search.",
-    authors: [{ name: "Mara-Li", id: 0n }],
+    authors: [{ name: "Mara-Li", id: 189390243676422144n }],
 
     // --- utils ---
     deFancy(text: unknown) {
@@ -119,7 +119,10 @@ export default definePlugin({
                     };
                 }
             }
-
+        } catch (e) {
+            console.error("[VC-No-Fancy] ChannelStore patch failed", e);
+        }
+        try {
             // Disambiguations (for autocomplete #)
             const Disamb = findByProps("getTextChannelNameDisambiguations") as AnyObj | undefined;
             if (Disamb && typeof Disamb.getTextChannelNameDisambiguations === "function") {
@@ -141,8 +144,12 @@ export default definePlugin({
                     return res;
                 };
             }
+        } catch (e) {
+            console.error("[VC-No-Fancy] Disamb patch failed", e);
+        }
 
-            // Threads Store : channel names in thread list
+        // Threads Store : channel names in thread list
+        try {
 
             const Threads = findByProps("computeAllActiveJoinedThreads") as AnyObj | undefined;
             if (Threads && typeof Threads.computeAllActiveJoinedThreads === "function") {
@@ -155,8 +162,11 @@ export default definePlugin({
                     return res;
                 };
             }
+        } catch (e) {
+            console.error("[VC-No-Fancy] Threads patch failed", e);
+        }
 
-
+        try {
             // search
             const Search = findByProps("queryChannels") as AnyObj | undefined;
             if (Search && typeof Search.queryChannels === "function") {
