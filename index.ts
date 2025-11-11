@@ -164,7 +164,7 @@ export default definePlugin({
 
                 Search.queryChannels = (opts: any) => {
                     try {
-                        const safe = { ...(opts ?? {}) }; // cloner seulement l’input
+                        const safe = { ...(opts ?? {}) }; // clone input
                         if (typeof safe.query === "string") safe.query = this.deFancy(safe.query);
                         const res = this._orig.queryChannels!(safe);
                         return res;
