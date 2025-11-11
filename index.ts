@@ -14,7 +14,7 @@ type AnyObj = Record<string, any>;
 
 export default definePlugin({
     name: "No Fancy",
-    description: "Normalize les caractères fantaisie (Unicode stylé) des noms de salons pour la recherche et l’autocomplete.",
+    description: "Normalize channel name to remove fancy Unicode characters, allowing to search for them in autocomplete and search.",
     authors: [{ name: "Mara-Li", id: 0n }],
 
     // --- utils ---
@@ -29,7 +29,7 @@ export default definePlugin({
         if (!obj || typeof obj.name !== "string") return;
         try {
             const n = this.deFancy(obj.name);
-            if (typeof n === "string" && n !== obj.name) obj.name = n; // in-place; pas de clone
+            if (typeof n === "string" && n !== obj.name) obj.name = n;
         } catch { /* noop */ }
     },
 
@@ -52,15 +52,14 @@ export default definePlugin({
         } catch { /* noop */ }
     },
 
-    // Compat avec éventuels retours de Stores
+    // --- hooks results ---
     defancyGuildChannels(result: any) {
         try { this._mutateList(result); } catch { /* noop */ }
-        return result; // toujours renvoyer l’original (conserve prototype & getters)
+        return result; // return original
     },
 
-    // --- patches regex (UI/entrée) ---
     patches: [
-        // Rendu de noms dans certaines listes (évite les spreads en aval)
+        // Render name in channel list
         {
             find: "UNREAD_IMPORTANT:",
             replacement: [
@@ -71,7 +70,7 @@ export default definePlugin({
                 }
             ]
         },
-        // Autocomplete # : normaliser ce que l’utilisateur tape et ce qui est affiché
+        // Autocomplete # : normalize text being matched
         {
             find: "channel-autocomplete",
             replacement: [
@@ -79,7 +78,7 @@ export default definePlugin({
                 { match: /(currentFullWord:\s*)([^,]+)(,)/g, replace: "$1$self.deFancy($2)$3" }
             ]
         },
-        // Moteur de recherche : normaliser uniquement la query d’entrée
+        // Search channels: normalize query text
         {
             find: "queryTextChannels(",
             replacement: [
@@ -95,7 +94,7 @@ export default definePlugin({
     _orig: {} as Record<string, AnyFn>,
 
     start() {
-        // ChannelStore : noms de salons
+        // ChannelStore : channel names in guild channel lists
         try {
             const ChannelStore = findByProps("getMutableGuildChannelsForGuild") as AnyObj | undefined;
             if (ChannelStore) {
@@ -105,7 +104,7 @@ export default definePlugin({
                     ChannelStore.getChannel = (id: any) => {
                         const ch = this._orig.getChannel!(id);
                         this._mutateName(ch);
-                        return ch; // renvoyer l’instance originale
+                        return ch;
                     };
                 }
 
@@ -115,18 +114,13 @@ export default definePlugin({
                         ChannelStore.getMutableGuildChannelsForGuild.bind(ChannelStore);
                     ChannelStore.getMutableGuildChannelsForGuild = (guildId: any) => {
                         const res = this._orig.getMutableGuildChannelsForGuild!(guildId);
-                        // mutate in place
                         this._mutateList(res);
                         return res;
                     };
                 }
             }
-        } catch (e) {
-            console.error("[VC-No-Fancy] ChannelStore patch failed", e);
-        }
 
-        // Disambiguations (utilisé par l’autocomplete #)
-        try {
+            // Disambiguations (for autocomplete #)
             const Disamb = findByProps("getTextChannelNameDisambiguations") as AnyObj | undefined;
             if (Disamb && typeof Disamb.getTextChannelNameDisambiguations === "function") {
                 this._orig.getTextChannelNameDisambiguations =
@@ -136,7 +130,7 @@ export default definePlugin({
                     const res = this._orig.getTextChannelNameDisambiguations!(...args);
                     if (Array.isArray(res)) {
                         for (const it of res) {
-                            // certains items portent 'name', d’autres 'text'
+                            // try with name & text
                             if (typeof it?.name === "string") {
                                 try { it.name = this.deFancy(it.name); } catch { }
                             } else if (typeof it?.text === "string") {
@@ -144,15 +138,12 @@ export default definePlugin({
                             }
                         }
                     }
-                    return res; // pas de map → pas de clones
+                    return res;
                 };
             }
-        } catch (e) {
-            console.error("[VC-No-Fancy] Disambiguations patch failed", e);
-        }
 
-        // Threads (parfois surfacent dans les résultats)
-        try {
+            // Threads Store : channel names in thread list
+
             const Threads = findByProps("computeAllActiveJoinedThreads") as AnyObj | undefined;
             if (Threads && typeof Threads.computeAllActiveJoinedThreads === "function") {
                 this._orig.computeAllActiveJoinedThreads =
@@ -164,12 +155,9 @@ export default definePlugin({
                     return res;
                 };
             }
-        } catch (e) {
-            console.error("[VC-No-Fancy] Threads patch failed", e);
-        }
 
-        // Moteur de recherche
-        try {
+
+            // search
             const Search = findByProps("queryChannels") as AnyObj | undefined;
             if (Search && typeof Search.queryChannels === "function") {
                 this._orig.queryChannels = Search.queryChannels.bind(Search);
@@ -179,7 +167,6 @@ export default definePlugin({
                         const safe = { ...(opts ?? {}) }; // cloner seulement l’input
                         if (typeof safe.query === "string") safe.query = this.deFancy(safe.query);
                         const res = this._orig.queryChannels!(safe);
-                        // ne pas transformer le résultat (risque de perdre les prototypes)
                         return res;
                     } catch {
                         return this._orig.queryChannels!(opts);
