@@ -123,12 +123,12 @@ function computeClean(name: string, type: number): string {
         if (cp <= 0x024F || isEmojiRelated(cp))
             filtered += ch;
     }
-    const isText = [2, 4].includes(type); // DM / Group DM → espaces
+    const isText = [2, 4, 10, 11, 12].includes(type);
     const sep = isText ? " " : "-";
     const cleaned = filtered
         .replace(/\s+/g, sep)
         .replace(new RegExp(`[${sep}]{2,}`, "g"), sep)
-        .replace(new RegExp(`^[${sep}]|[${sep}]$`, "g"), ""); // bords
+        .replace(new RegExp(`^[${sep}]|[${sep}]$`, "g"), "");
 
     return cleaned || name;
 }
