@@ -10,10 +10,6 @@ import definePlugin from "@utils/types";
 import { Channel } from "@vencord/discord-types";
 import { ChannelStore } from "@webpack/common";
 
-// ---------------------------------------------------------------------------
-// Fancy-Unicode → ASCII map (math bold/italic/script/fraktur/double-struck/
-// sans-serif/monospace, fullwidth, small caps, circled letters…)
-// ---------------------------------------------------------------------------
 const FANCY_MAP: Record<string, string> = {};
 
 function registerRange(start: number, end: number, asciiStart: number) {
@@ -124,9 +120,8 @@ function computeClean(name: string, type: number): string {
     let filtered = "";
     for (const ch of s) {
         const cp = ch.codePointAt(0)!;
-        if (cp <= 0x7F || isEmojiRelated(cp)) {
+        if (cp <= 0x024F || isEmojiRelated(cp))
             filtered += ch;
-        }
     }
     const isText = [2, 4].includes(type); // DM / Group DM → espaces
     const sep = isText ? " " : "-";
