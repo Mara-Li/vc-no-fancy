@@ -6,6 +6,13 @@ Follow [install userplugins](https://docs.equicord.org/plugins) to use.
 
 Also you can use [two python script i wrote to quickly update userplugins & build Equicord](https://gist.github.com/Mara-Li/e1d902e9141943a712bb0428f00d9374)
 
+tldr:
+- Clone Equicord/Vencord
+- `cd` into it
+- `git clone https://github.com/Mara-Li/vc-no-fancy src/userplugins/vc-no-fancy`
+- `pnpm build`
+- `pnpm inject`
+
 ## Overview
 
 Discord allows the use of stylized Unicode characters (𝑳𝒊𝒌𝒆 𝑻𝒉𝒊𝒔) in channel names.
