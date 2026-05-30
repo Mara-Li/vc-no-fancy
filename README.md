@@ -1,6 +1,10 @@
 # No Fancy
 
-A Vencord plugin that normalizes fancy Unicode characters in channel names and search queries.
+A Vencord/Equicord userplugin that normalizes fancy Unicode characters in channel names and search queries.
+
+Follow [install userplugins](https://docs.equicord.org/plugins) to use.
+
+Also you can use [two python script i wrote to quickly update userplugins & build Equicord](https://gist.github.com/Mara-Li/e1d902e9141943a712bb0428f00d9374)
 
 ## Overview
 
@@ -18,25 +22,33 @@ While visually appealing, these characters can cause issues with:
 Example:
 `𝑳𝒊𝒌𝒆-𝑻𝒉𝒊𝒔` → `Like-this`
 
-## Features
+### Example
+#### Channel list
+![Before](https://i.imgur.com/ypGcBhw.png)
+![After](https://i.imgur.com/aBYIj1s.png)
 
-* Normalizes channel names to plain ASCII
-* Fixes query-based lookup (`queryChannels`)
-* Normalizes autocomplete input and displayed suggestions
-* Cleans names within:
-  * `ChannelStore.getChannel`
-  * `getMutableGuildChannelsForGuild`
-  * `getTextChannelNameDisambiguations`
-  * `computeAllActiveJoinedThreads`
-* Includes UI-level patches to ensure consistent display
-* Mutates objects safely **without cloning** to avoid breaking internal Discord prototypes
-* Fully compatible with current Vencord architecture
+#### Mention
+![Before](https://i.imgur.com/6UsiMGA.png)
+![After](https://i.imgur.com/jaL0PqV.png)
+
+#### Quick-Switcher
+
+![Before (trolling version)](https://i.imgur.com/OYv9Ye2.png)
+![Before (copy pasted name)](https://i.imgur.com/zp9GcKO.png)
+![After](https://i.imgur.com/BY9Ezo4.png)
+
+## Options
+It also add useful options like:
+- Removing hyphen: Replace all `-` to a space in channel name
+- To title : Capitalize the first letter of the channel
+- Capitalize : Capitalize the first letter of **each word** in the channel.
+
+To title and capitalize can't be used together.
 
 ## Why This Matters
 
 Many Discord users and servers use stylized Unicode for aesthetic purposes.
 However, these characters can break:
-
 * Search relevance
 * Channel filtering
 * Fuzzy matching
@@ -44,29 +56,9 @@ However, these characters can break:
 
 This plugin restores predictable behavior without forcing users to rename their channels.
 
-## How It Works
-
-* All Unicode “fancy” characters are passed through a normalization function (`fancyToAscii`).
-* The plugin mutates the `name` or `text` fields **in place**, preserving internal prototypes and methods.
-* Search queries are normalized before being passed into Discord’s internal search engine.
-* Displayed autocomplete text is patched via regex.
-
-## Installation
-
-1. Install Vencord (if not already installed).
-2. Place the plugin folder (containing the `.ts` file and `utils/unidecode`) into your Vencord `plugins` directory.
-3. Enable **No Fancy** in the Vencord settings.
-4. Reload Discord.
-
-## Limitations
-
-* The plugin does not modify the actual channel names on Discord’s servers.
-* Normalization happens locally on the client side only.
-* Usernames and role names are not yet normalized (may be added later).
-
 ## Credits
 
-* Plugin author: **Mara-Li**
+* Plugin author: **Mara-Li**, **AutumnVN**
 * Vencord contributors & community
 
 ## License

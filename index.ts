@@ -1,15 +1,14 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2023 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Original: https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/cleanChannelName/index.ts
  */
 
+import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
-import definePlugin from "@utils/types";
+import definePlugin, { OptionType } from "@utils/types";
 import { Channel } from "@vencord/discord-types";
 import { ChannelStore } from "@webpack/common";
-
 const FANCY_MAP: Record<string, string> = {};
 
 function registerRange(start: number, end: number, asciiStart: number) {
@@ -19,6 +18,24 @@ function registerRange(start: number, end: number, asciiStart: number) {
 function reg(o: Record<string, string>) {
     for (const k in o) FANCY_MAP[k] = o[k];
 }
+
+const settings = definePluginSettings({
+    replaceHyphen: {
+        type: OptionType.BOOLEAN,
+        description: "Replace hyphen by space in channel name",
+        default: false,
+    },
+    toTitle: {
+        type: OptionType.BOOLEAN,
+        description: "Capitalize the first letter of the channel",
+        default: false,
+    },
+    capitalize: {
+        type: OptionType.BOOLEAN,
+        description: "Capitalize the first letter of each word in the channels (can't be used in conjunction with toTitle).",
+        default: false,
+    }
+});
 
 // Math bold
 registerRange(0x1D400, 0x1D419, 0x41); registerRange(0x1D41A, 0x1D433, 0x61);
@@ -115,7 +132,19 @@ function isEmojiRelated(cp: number): boolean {
 const ORIGINAL_NAME = Symbol("cleanChannelName.original");
 let editingChannelId: string | null = null;
 
+function toTitleCase(text: string) {
+    return text.toLowerCase().charAt(0).toUpperCase() + text.slice(1);
+}
+
+function toCapitalizeCase(text: string) {
+    return text.toLowerCase().replace(
+        /(^\p{L}{1})|(\s+\p{L}{1})|(-\p{L}{1})/gu,
+        (char: string) => char.toUpperCase(),
+    );
+}
+
 function computeClean(name: string, type: number): string {
+    const { replaceHyphen, toTitle, capitalize } = settings.store;
     const s = decodeFancy(name.normalize("NFKC"));
     let filtered = "";
     for (const ch of s) {
@@ -123,19 +152,31 @@ function computeClean(name: string, type: number): string {
         if (cp <= 0x024F || isEmojiRelated(cp))
             filtered += ch;
     }
-    const isText = [2, 4, 10, 11, 12].includes(type);
+    const isText = [2, 3, 4, 10, 11, 12].includes(type);
     const sep = isText ? " " : "-";
-    const cleaned = filtered
+    let cleaned = filtered
         .replace(/\s+/g, sep)
         .replace(new RegExp(`[${sep}]{2,}`, "g"), sep)
         .replace(new RegExp(`^[${sep}]|[${sep}]$`, "g"), "");
+    if (replaceHyphen) {
+        cleaned = cleaned.replaceAll("-", " ");
+        name = name.replaceAll("-", " ");
+    }
+    if (toTitle) {
+        cleaned = toTitleCase(cleaned);
+        name = toTitleCase(name);
+    } else if (capitalize) {
+        cleaned = toCapitalizeCase(cleaned);
+        name = toTitleCase(name);
+    }
 
     return cleaned || name;
 }
 
 export default definePlugin({
-    name: "No fancy Channel",
+    name: "No Fancy Channel",
     authors: [Devs.AutumnVN, { name: "Mara-Li", id: 189390243676422144n }],
+    settings,
     description: "Normalize channel name to remove fancy Unicode characters, allowing to search for them in autocomplete and search. Based on CleanChannelName.",
     tags: ["Appearance", "Customisation", "Chat", "Emotes", "Servers"],
     patches: [
@@ -149,7 +190,7 @@ export default definePlugin({
     ],
 
     flux: {
-        CHANNEL_SETTINGS_INIT({ channelId }: { channelId: string }) {
+        CHANNEL_SETTINGS_INIT({ channelId }: { channelId: string; }) {
             editingChannelId = channelId;
             (ChannelStore as any).emitChange?.();
         },
